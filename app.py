@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 # Load Model and Files
 # =========================
 
-model = load_model("lstm_model.h5", compile=False)
+model = load_model("lstm_model.h5")
 
 with open("tokenizer.pkl", "rb") as f:
     tokenizer = pickle.load(f)
