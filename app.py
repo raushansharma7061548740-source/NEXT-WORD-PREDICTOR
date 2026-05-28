@@ -1,91 +1,49 @@
 import streamlit as st
-import numpy as np
 import pickle
+import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# =========================
-# Load Model and Files
-# =========================
+# Load model
+model = load_model("lstm_model.keras", compile=False)
 
-model = load_model("lstm_model.h5")
-
+# Load tokenizer
 with open("tokenizer.pkl", "rb") as f:
     tokenizer = pickle.load(f)
 
+# Load max length
 with open("max_len.pkl", "rb") as f:
     max_len = pickle.load(f)
 
-# =========================
 # Streamlit UI
-# =========================
-
-st.set_page_config(
-    page_title="Next Word Predictor",
-    page_icon="🤖",
-    layout="centered"
-)
-
-st.title("🤖 Next Word Prediction using LSTM")
+st.title("Next Word Predictor")
 st.write("Enter a sentence and predict the next word.")
 
-# User Input
-input_text = st.text_input("Enter your text:")
-
-# =========================
-# Prediction Function
-# =========================
-
-def predict_next_word(model, tokenizer, text, max_len):
-
-    # Convert text to sequence
-    token_list = tokenizer.texts_to_sequences([text])[0]
-
-    # Padding
-    token_list = pad_sequences(
-        [token_list],
-        maxlen=max_len - 1,
-        padding='pre'
-    )
-
-    # Predict
-    predicted = model.predict(token_list, verbose=0)
-
-    # Get predicted index
-    predicted_index = np.argmax(predicted)
-
-    # Convert index to word
-    output_word = ""
-
-    for word, index in tokenizer.word_index.items():
-        if index == predicted_index:
-            output_word = word
-            break
-
-    return output_word
-
-# =========================
-# Button
-# =========================
+text = st.text_input("Enter Text")
 
 if st.button("Predict Next Word"):
 
-    if input_text.strip() == "":
+    if text.strip() == "":
         st.warning("Please enter some text.")
+    
     else:
+        # Convert text to sequence
+        seq = tokenizer.texts_to_sequences([text])[0]
 
-        next_word = predict_next_word(
-            model,
-            tokenizer,
-            input_text,
-            max_len
-        )
+        # Padding
+        padded = pad_sequences([seq], maxlen=max_len - 1, padding='pre')
 
-        st.success(f"Predicted Next Word: {next_word}")
+        # Prediction
+        pred = model.predict(padded, verbose=0)
 
-# =========================
-# Footer
-# =========================
+        predicted_index = np.argmax(pred)
 
-st.markdown("---")
-st.markdown("Built with Streamlit + TensorFlow")
+        # Find predicted word
+        predicted_word = ""
+
+        for word, index in tokenizer.word_index.items():
+            if index == predicted_index:
+                predicted_word = word
+                break
+
+        st.success(f"Predicted Next Word: {predicted_word}")
